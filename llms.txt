@@ -1,0 +1,36 @@
+# The Mountain — Groove Box
+
+> A browser-based 6-channel generative music mixer with per-channel Lead and Bach modes. Runs entirely in the browser — no server, no account, no cost. Built with Web Audio API, React 19, Vite, and TypeScript.
+
+## What it does
+
+Six instruments — bass, pluck, pad, drums, cello, flute — each running a generative loop over a repeating Am→G→C→F 4-bar progression. Every channel has three behavioral modes:
+
+- **Normal** — steady rhythmic pattern
+- **Lead ⚡** — takes the melodic foreground, improvises above the bed
+- **Bach `[CPU]`** — plays a contrapuntal two-voice (left hand / right hand) arrangement using Am7/G7/Cmaj7/Fmaj7 voicings. Bar 3 triggers a Fibonacci-indexed variant.
+
+Channels can stack freely. The whole thing runs offline.
+
+## Live
+
+https://yellowhapax.github.io/MusicBox/
+
+## Source
+
+https://github.com/YellowHapax/MusicBox
+
+## License
+
+MIT. Free to use, study, remix, deploy.
+
+## Stack
+
+- Web Audio API (no libraries)
+- React 19 + TypeScript
+- Vite 6 + Tailwind v4
+- motion/react, lucide-react
+
+## Author
+
+YellowHapax — https://github.com/YellowHapax
