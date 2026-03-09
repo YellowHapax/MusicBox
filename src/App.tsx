@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu } from 'lucide-react';
+import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame } from 'lucide-react';
 import { motion } from 'motion/react';
 import { MusicBoxEngine, ChannelName } from './audio';
 
@@ -69,6 +69,8 @@ export default function App() {
     { name: 'drums', icon: Drum, label: 'Drums' },
     { name: 'cello', icon: Waves, label: 'Cello' },
     { name: 'flute', icon: Wind, label: 'Flute' },
+    { name: 'guitar', icon: Flame, label: 'E. Guitar' },
+    { name: 'hornpipe', icon: Music, label: 'Hornpipe' },
   ] as const;
 
   const bar = Math.floor(currentStep / 16);
@@ -175,7 +177,7 @@ export default function App() {
           </div>
 
           {/* Channels */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {channelConfig.map(({ name, icon: Icon, label }) => {
               const isActive = channels[name];
               const isLead = leads[name];

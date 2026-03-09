@@ -1,6 +1,6 @@
 export const mtof = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
-export type ChannelName = 'bass' | 'pluck' | 'pad' | 'drums' | 'cello' | 'flute';
+export type ChannelName = 'bass' | 'pluck' | 'pad' | 'drums' | 'cello' | 'flute' | 'guitar' | 'hornpipe';
 
 export class MusicBoxEngine {
   ctx: AudioContext | null = null;
@@ -21,6 +21,8 @@ export class MusicBoxEngine {
     drums: false,
     cello: false,
     flute: false,
+    guitar: false,
+    hornpipe: false,
   };
 
   leads: Record<ChannelName, boolean> = {
@@ -30,6 +32,8 @@ export class MusicBoxEngine {
     drums: false,
     cello: false,
     flute: false,
+    guitar: false,
+    hornpipe: false,
   };
 
   bachs: Record<ChannelName, boolean> = {
@@ -39,6 +43,8 @@ export class MusicBoxEngine {
     drums: false,
     cello: false,
     flute: false,
+    guitar: false,
+    hornpipe: false,
   };
 
   onStep?: (step: number) => void;
@@ -325,6 +331,88 @@ export class MusicBoxEngine {
     noise.stop(time + duration);
   }
 
+  playGuitar(midi: number, time: number, duration: number) {
+    if (!this.ctx || !this.masterGain) return;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    const distortion = this.ctx.createWaveShaper();
+    
+    // Create a heavy distortion curve
+    const amount = 50;
+    const n_samples = 44100;
+    const curve = new Float32Array(n_samples);
+    const deg = Math.PI / 180;
+    for (let i = 0; i < n_samples; ++i) {
+      const x = (i * 2) / n_samples - 1;
+      curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
+    }
+    distortion.curve = curve;
+    distortion.oversample = '4x';
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'square';
+    
+    const freq = mtof(midi);
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 0.5; // sub octave for thickness
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, time);
+    filter.frequency.exponentialRampToValueAtTime(800, time + duration * 0.5);
+    filter.Q.value = 2;
+
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(0.4, time + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(distortion);
+    distortion.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc1.start(time);
+    osc2.start(time);
+    osc1.stop(time + duration);
+    osc2.stop(time + duration);
+  }
+
+  playHornpipe(midi: number, time: number, duration: number) {
+    if (!this.ctx || !this.masterGain) return;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc1.type = 'square';
+    osc2.type = 'sawtooth';
+    
+    const freq = mtof(midi);
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 1.005; // slight detune for reedy sound
+
+    filter.type = 'bandpass';
+    filter.frequency.value = 1200;
+    filter.Q.value = 1.5;
+
+    gain.gain.setValueAtTime(0, time);
+    gain.gain.linearRampToValueAtTime(0.3, time + 0.05);
+    gain.gain.setValueAtTime(0.3, time + duration - 0.1);
+    gain.gain.linearRampToValueAtTime(0.01, time + duration);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc1.start(time);
+    osc2.start(time);
+    osc1.stop(time + duration);
+    osc2.stop(time + duration);
+  }
+
   nextNote() {
     const secondsPerBeat = 60.0 / this.tempo;
     this.nextNoteTime += 0.25 * secondsPerBeat;
@@ -529,6 +617,52 @@ export class MusicBoxEngine {
         const noteEvent = melodyPattern.find(p => p.step === stepInBar);
         if (noteEvent) {
           this.playFlute(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
+        }
+      }
+    }
+
+    if (this.channels.guitar) {
+      if (this.bachs.guitar) {
+        const note = getBachRightHand(stepInBar);
+        this.playGuitar(note - 12, time, (60.0 / this.tempo) * 0.25);
+      } else if (this.leads.guitar) {
+        // Heavy syncopated hits
+        if ([0, 3, 6, 10, 14].includes(stepInBar)) {
+          this.playGuitar(root - 12, time, (60.0 / this.tempo) * 0.5);
+        }
+      } else {
+        // Chugging power chords (root and fifth)
+        if (stepInBar % 2 === 0) {
+          this.playGuitar(root - 12, time, (60.0 / this.tempo) * 0.25);
+          this.playGuitar(root - 5, time, (60.0 / this.tempo) * 0.25);
+        }
+      }
+    }
+
+    if (this.channels.hornpipe) {
+      if (this.bachs.hornpipe) {
+        const note = getBachRightHand(stepInBar);
+        this.playHornpipe(note, time, (60.0 / this.tempo) * 0.25);
+      } else if (this.leads.hornpipe) {
+        // Folk melody variation
+        const melodyPattern = [
+          { step: 0, note: chord[2], dur: 0.5 },
+          { step: 2, note: chord[1], dur: 0.25 },
+          { step: 3, note: chord[2], dur: 0.25 },
+          { step: 4, note: chord[0] + 12, dur: 0.5 },
+          { step: 6, note: chord[2], dur: 0.5 },
+          { step: 8, note: chord[1], dur: 0.5 },
+          { step: 10, note: chord[0], dur: 0.5 },
+          { step: 12, note: chord[2], dur: 1.0 },
+        ];
+        const noteEvent = melodyPattern.find(p => p.step === stepInBar);
+        if (noteEvent) {
+          this.playHornpipe(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
+        }
+      } else {
+        // Drone on the root of the scale (A)
+        if (stepInBar === 0) {
+          this.playHornpipe(57, time, (60.0 / this.tempo) * 4); // A3 drone
         }
       }
     }
