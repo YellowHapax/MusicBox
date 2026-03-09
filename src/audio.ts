@@ -338,9 +338,11 @@ export class MusicBoxEngine {
     const gain = this.ctx.createGain();
     const filter = this.ctx.createBiquadFilter();
     const distortion = this.ctx.createWaveShaper();
-    
-    // Create a heavy distortion curve
-    const amount = 50;
+    const vibratoOsc = this.ctx.createOscillator();
+    const vibratoGain = this.ctx.createGain();
+
+    // Overdrive — crunch not fuzz
+    const amount = 20;
     const n_samples = 44100;
     const curve = new Float32Array(n_samples);
     const deg = Math.PI / 180;
@@ -352,19 +354,29 @@ export class MusicBoxEngine {
     distortion.oversample = '4x';
 
     osc1.type = 'sawtooth';
-    osc2.type = 'square';
-    
+    osc2.type = 'sawtooth';
+
     const freq = mtof(midi);
     osc1.frequency.value = freq;
-    osc2.frequency.value = freq * 0.5; // sub octave for thickness
+    osc2.frequency.value = freq * 1.003; // slight chorus detune
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(2000, time);
-    filter.frequency.exponentialRampToValueAtTime(800, time + duration * 0.5);
-    filter.Q.value = 2;
+    // Vibrato — ramps in like a flute
+    vibratoOsc.type = 'sine';
+    vibratoOsc.frequency.value = 5.5;
+    vibratoGain.gain.setValueAtTime(0, time);
+    vibratoGain.gain.linearRampToValueAtTime(3, time + duration * 0.4);
+    vibratoOsc.connect(vibratoGain);
+    vibratoGain.connect(osc1.frequency);
+    vibratoGain.connect(osc2.frequency);
+
+    // Bright bandpass — kills the mud, keeps the note singing
+    filter.type = 'bandpass';
+    filter.frequency.value = 2500;
+    filter.Q.value = 0.8;
 
     gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.4, time + 0.02);
+    gain.gain.linearRampToValueAtTime(0.5, time + 0.01);
+    gain.gain.setValueAtTime(0.5, time + duration * 0.7);
     gain.gain.exponentialRampToValueAtTime(0.01, time + duration);
 
     osc1.connect(filter);
@@ -373,8 +385,10 @@ export class MusicBoxEngine {
     distortion.connect(gain);
     gain.connect(this.masterGain);
 
+    vibratoOsc.start(time);
     osc1.start(time);
     osc2.start(time);
+    vibratoOsc.stop(time + duration);
     osc1.stop(time + duration);
     osc2.stop(time + duration);
   }
@@ -624,11 +638,11 @@ export class MusicBoxEngine {
     if (this.channels.guitar) {
       if (this.bachs.guitar) {
         const note = getBachRightHand(stepInBar);
-        this.playGuitar(note - 12, time, (60.0 / this.tempo) * 0.25);
+        this.playGuitar(note, time, (60.0 / this.tempo) * 0.25);
       } else if (this.leads.guitar) {
-        // Heavy syncopated hits
+        // Syncopated hits at melody register
         if ([0, 3, 6, 10, 14].includes(stepInBar)) {
-          this.playGuitar(root - 12, time, (60.0 / this.tempo) * 0.5);
+          this.playGuitar(root, time, (60.0 / this.tempo) * 0.5);
         }
       } else {
         // Chugging power chords (root and fifth)
