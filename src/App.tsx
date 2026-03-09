@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame, Sparkles } from 'lucide-react';
+import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame } from 'lucide-react';
 import { motion } from 'motion/react';
-import { MusicBoxEngine, ChannelName, STANZA_NAMES } from './audio';
+import { MusicBoxEngine, ChannelName, StanzaName, STANZA_DATA } from './audio';
 
 const engine = new MusicBoxEngine();
 
@@ -13,8 +13,10 @@ export default function App() {
   const [channels, setChannels] = useState<Record<ChannelName, boolean>>(engine.channels);
   const [leads, setLeads] = useState<Record<ChannelName, boolean>>(engine.leads);
   const [bachs, setBachs] = useState<Record<ChannelName, boolean>>(engine.bachs);
-  const [stanzas, setStanzas] = useState<Record<ChannelName, boolean>>(engine.stanzas);
-  const [stanzaIndex, setStanzaIndex] = useState<Record<ChannelName, number>>(engine.stanzaIndex);
+  const [currentStanza, setCurrentStanza] = useState<StanzaName>(engine.currentStanza);
+  const [view, setView] = useState<'live' | 'grid'>(engine.view);
+  // Force update for composition grid
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     engine.onStep = (step) => {
@@ -64,12 +66,6 @@ export default function App() {
     setBachs({ ...engine.bachs });
   };
 
-  const toggleStanza = (name: ChannelName) => {
-    engine.toggleStanza(name);
-    setStanzas({ ...engine.stanzas });
-    setStanzaIndex({ ...engine.stanzaIndex });
-  };
-
   const channelConfig = [
     { name: 'bass', icon: Waves, label: 'Bass' },
     { name: 'pluck', icon: Guitar, label: 'Pluck' },
@@ -78,13 +74,16 @@ export default function App() {
     { name: 'cello', icon: Waves, label: 'Cello' },
     { name: 'flute', icon: Wind, label: 'Flute' },
     { name: 'guitar', icon: Flame, label: 'E. Guitar' },
-    { name: 'hornpipe', icon: Music, label: 'Hornpipe' },
+    { name: 'saxophone', icon: Music, label: 'Saxophone' },
   ] as const;
 
   const bar = Math.floor(currentStep / 16);
   const stepInBar = currentStep % 16;
-  const chords = ['Am', 'G', 'C', 'F'];
-  const currentChord = chords[bar];
+  const seqStep = bar % 16;
+  
+  const activeStanza = view === 'grid' ? engine.viewStanzas[seqStep] : currentStanza;
+  const chords = STANZA_DATA[activeStanza].names || ['Am', 'G', 'C', 'F'];
+  const currentChord = chords[bar % 4];
 
   // Calculate positions for 16 dots in a circle
   const radius = 120;
@@ -133,7 +132,7 @@ export default function App() {
               {currentChord}
             </motion.div>
             <div className="text-xs text-indigo-400/80 tracking-widest uppercase mt-2 font-medium">
-              Bar {bar + 1}/4
+              Bar {seqStep + 1}/{view === 'grid' ? 16 : 4}
             </div>
           </div>
 
@@ -184,14 +183,124 @@ export default function App() {
             </button>
           </div>
 
-          {/* Channels */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {channelConfig.map(({ name, icon: Icon, label }) => {
+          {/* Mode Toggle */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => {
+                const newMode = view === 'live' ? 'grid' : 'live';
+                engine.view = newMode;
+                setView(newMode);
+              }}
+              className="px-6 py-2 rounded-full text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 transition-colors uppercase tracking-widest"
+            >
+              {view === 'grid' ? 'Switch to Live Mode' : 'Switch to Composition Mode'}
+            </button>
+          </div>
+
+          {/* Stanza Selector */}
+          {!view && (
+            <div className="flex gap-2 justify-center mb-2">
+              {(['subdominant', 'tonic', 'dominant'] as StanzaName[]).map((stanza) => (
+                <button
+                  key={stanza}
+                  onClick={() => {
+                    engine.currentStanza = stanza;
+                    setCurrentStanza(stanza);
+                  }}
+                  className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
+                    currentStanza === stanza
+                      ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]'
+                      : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                  }`}
+                >
+                  {stanza}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Channels / Composition Grid */}
+          {view === 'grid' ? (
+            <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
+              <div className="min-w-[600px] flex flex-col gap-2">
+                {/* Stanza Row */}
+                <div className="flex gap-1 mb-2 pl-24">
+                  {Array.from({ length: 16 }).map((_, i) => (
+                    <select
+                      key={i}
+                      value={engine.viewStanzas[i]}
+                      onChange={(e) => {
+                        engine.viewStanzas[i] = e.target.value as StanzaName;
+                        setTick(t => t + 1);
+                      }}
+                      className="w-8 h-8 text-[10px] bg-white/5 border border-white/10 rounded text-slate-300 appearance-none text-center cursor-pointer hover:bg-white/10 font-bold uppercase"
+                    >
+                      <option value="subdominant">D</option>
+                      <option value="tonic">S</option>
+                      <option value="dominant">H</option>
+                    </select>
+                  ))}
+                </div>
+                
+                {/* Channels Grid */}
+                {channelConfig.map(({ name, label }) => (
+                  <div key={name} className="flex gap-1 items-center">
+                    <div className="w-24 text-[10px] font-medium text-slate-400 uppercase tracking-wider truncate pr-2 text-right">
+                      {label}
+                    </div>
+                    {Array.from({ length: 16 }).map((_, i) => {
+                      const modes = engine.compositionGrid[name][i];
+                      const isCurrentMeasure = seqStep === i;
+                      return (
+                        <div
+                          key={i}
+                          className={`w-8 h-8 rounded flex flex-col gap-[1px] overflow-hidden transition-all ${
+                            isCurrentMeasure && isPlaying ? 'ring-2 ring-white' : ''
+                          }`}
+                        >
+                          <button
+                            onClick={() => {
+                              engine.compositionGrid[name][i].base = !modes.base;
+                              setTick(t => t + 1);
+                            }}
+                            className={`flex-1 transition-all ${
+                              modes.base ? 'bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,0.5)]' : 'bg-white/5 hover:bg-white/10'
+                            }`}
+                            title="Base Beat"
+                          />
+                          <button
+                            onClick={() => {
+                              engine.compositionGrid[name][i].lead = !modes.lead;
+                              setTick(t => t + 1);
+                            }}
+                            className={`flex-1 transition-all ${
+                              modes.lead ? 'bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]' : 'bg-white/5 hover:bg-white/10'
+                            }`}
+                            title="Lead Mode"
+                          />
+                          <button
+                            onClick={() => {
+                              engine.compositionGrid[name][i].bach = !modes.bach;
+                              setTick(t => t + 1);
+                            }}
+                            className={`flex-1 transition-all ${
+                              modes.bach ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-white/5 hover:bg-white/10'
+                            }`}
+                            title="Bach Mode"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {channelConfig.map(({ name, icon: Icon, label }) => {
               const isActive = channels[name];
               const isLead = leads[name];
               const isBach = bachs[name];
-              const isStanza = stanzas[name];
-              const sIdx = stanzaIndex[name];
               return (
                 <div
                   key={name}
@@ -201,7 +310,7 @@ export default function App() {
                       : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
                   }`}
                 >
-                  <div className="absolute top-2 right-2 flex gap-0.5 z-10">
+                  <div className="absolute top-2 right-2 flex gap-1 z-10">
                     <button 
                       className="p-1 rounded-full hover:bg-white/10 transition-colors"
                       onClick={(e) => { e.stopPropagation(); toggleLead(name); }}
@@ -216,18 +325,6 @@ export default function App() {
                     >
                       <Cpu className={`w-3 h-3 ${isBach ? 'text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'text-slate-600'}`} />
                     </button>
-                    <button 
-                      className="p-1 rounded-full hover:bg-white/10 transition-colors"
-                      onClick={(e) => { e.stopPropagation(); toggleStanza(name); }}
-                      title={isStanza ? STANZA_NAMES[sIdx] : 'Toggle Stanza'}
-                    >
-                      <Sparkles className={`w-3 h-3 ${
-                        !isStanza ? 'text-slate-600' :
-                        sIdx === 0 ? 'text-violet-400 drop-shadow-[0_0_5px_rgba(167,139,250,0.8)]' :
-                        sIdx === 1 ? 'text-rose-400 drop-shadow-[0_0_5px_rgba(251,113,133,0.8)]' :
-                        'text-sky-400 drop-shadow-[0_0_5px_rgba(56,189,248,0.8)]'
-                      }`} />
-                    </button>
                   </div>
                   <button 
                     className="flex flex-col items-center gap-2 w-full h-full pt-2"
@@ -240,6 +337,7 @@ export default function App() {
               );
             })}
           </div>
+          )}
 
           <div className="flex flex-col gap-4 mt-2">
             {/* Volume Slider */}
