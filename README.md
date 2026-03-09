@@ -1,20 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# The Mountain — Groove Box
 
-# Run and deploy your AI Studio app
+An 8-channel generative music mixer that runs entirely in the browser. No server, no account, no install.
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/83b90c5f-093b-44f0-9d23-2eeb62d8e5fb
+**[Live →](https://yellowhapax.github.io/MusicBox/)**
 
 ## Run Locally
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js
 
+```
+npm install
+npm run dev
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Stack
+
+- Web Audio API (no libraries)
+- React 19 + TypeScript
+- Vite 6 + Tailwind v4
+
+## License
+
+MIT
