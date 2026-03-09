@@ -637,10 +637,24 @@ export class MusicBoxEngine {
 
     if (this.channels.guitar) {
       if (this.bachs.guitar) {
-        // Quarter-note power chord pulse — hard rhythmic anchor beneath the melody
-        if (stepInBar % 4 === 0) {
-          this.playGuitar(bChord[0] - 12, time, (60.0 / this.tempo) * 0.9);
-          this.playGuitar(bChord[0] - 5, time, (60.0 / this.tempo) * 0.9);
+        // Virtuoso melodic riff — walks chord tones with syncopation and octave flair
+        const riff = [
+          { step: 0,  idx: 0, oct: 0,  dur: 0.4  }, // root, beat 1
+          { step: 2,  idx: 2, oct: 0,  dur: 0.2  }, // fifth
+          { step: 3,  idx: 1, oct: 0,  dur: 0.2  }, // third, syncopated
+          { step: 4,  idx: 0, oct: 0,  dur: 0.4  }, // root, beat 2
+          { step: 6,  idx: 3, oct: 0,  dur: 0.2  }, // seventh
+          { step: 7,  idx: 2, oct: 0,  dur: 0.2  }, // fifth back
+          { step: 8,  idx: 0, oct: 12, dur: 0.4  }, // root up an octave, beat 3
+          { step: 10, idx: 1, oct: 0,  dur: 0.2  }, // third
+          { step: 11, idx: 0, oct: 0,  dur: 0.15 }, // ghost
+          { step: 12, idx: 2, oct: 0,  dur: 0.4  }, // fifth, beat 4
+          { step: 14, idx: 1, oct: 0,  dur: 0.2  }, // third
+          { step: 15, idx: 3, oct: 0,  dur: 0.2  }, // seventh leading into next bar
+        ];
+        const ev = riff.find(p => p.step === stepInBar);
+        if (ev) {
+          this.playGuitar(bChord[ev.idx] + ev.oct, time, (60.0 / this.tempo) * ev.dur);
         }
       } else if (this.leads.guitar) {
         // Syncopated hits at melody register
