@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame } from 'lucide-react';
+import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
-import { MusicBoxEngine, ChannelName } from './audio';
+import { MusicBoxEngine, ChannelName, STANZA_NAMES } from './audio';
 
 const engine = new MusicBoxEngine();
 
@@ -13,6 +13,8 @@ export default function App() {
   const [channels, setChannels] = useState<Record<ChannelName, boolean>>(engine.channels);
   const [leads, setLeads] = useState<Record<ChannelName, boolean>>(engine.leads);
   const [bachs, setBachs] = useState<Record<ChannelName, boolean>>(engine.bachs);
+  const [stanzas, setStanzas] = useState<Record<ChannelName, boolean>>(engine.stanzas);
+  const [stanzaIndex, setStanzaIndex] = useState<Record<ChannelName, number>>(engine.stanzaIndex);
 
   useEffect(() => {
     engine.onStep = (step) => {
@@ -60,6 +62,12 @@ export default function App() {
   const toggleBach = (name: ChannelName) => {
     engine.toggleBach(name);
     setBachs({ ...engine.bachs });
+  };
+
+  const toggleStanza = (name: ChannelName) => {
+    engine.toggleStanza(name);
+    setStanzas({ ...engine.stanzas });
+    setStanzaIndex({ ...engine.stanzaIndex });
   };
 
   const channelConfig = [
@@ -182,6 +190,8 @@ export default function App() {
               const isActive = channels[name];
               const isLead = leads[name];
               const isBach = bachs[name];
+              const isStanza = stanzas[name];
+              const sIdx = stanzaIndex[name];
               return (
                 <div
                   key={name}
@@ -191,7 +201,7 @@ export default function App() {
                       : 'bg-white/5 border-white/5 text-slate-500 hover:bg-white/10'
                   }`}
                 >
-                  <div className="absolute top-2 right-2 flex gap-1 z-10">
+                  <div className="absolute top-2 right-2 flex gap-0.5 z-10">
                     <button 
                       className="p-1 rounded-full hover:bg-white/10 transition-colors"
                       onClick={(e) => { e.stopPropagation(); toggleLead(name); }}
@@ -205,6 +215,18 @@ export default function App() {
                       title="Toggle Bach Mode"
                     >
                       <Cpu className={`w-3 h-3 ${isBach ? 'text-emerald-400 drop-shadow-[0_0_5px_rgba(52,211,153,0.8)]' : 'text-slate-600'}`} />
+                    </button>
+                    <button 
+                      className="p-1 rounded-full hover:bg-white/10 transition-colors"
+                      onClick={(e) => { e.stopPropagation(); toggleStanza(name); }}
+                      title={isStanza ? STANZA_NAMES[sIdx] : 'Toggle Stanza'}
+                    >
+                      <Sparkles className={`w-3 h-3 ${
+                        !isStanza ? 'text-slate-600' :
+                        sIdx === 0 ? 'text-violet-400 drop-shadow-[0_0_5px_rgba(167,139,250,0.8)]' :
+                        sIdx === 1 ? 'text-rose-400 drop-shadow-[0_0_5px_rgba(251,113,133,0.8)]' :
+                        'text-sky-400 drop-shadow-[0_0_5px_rgba(56,189,248,0.8)]'
+                      }`} />
                     </button>
                   </div>
                   <button 

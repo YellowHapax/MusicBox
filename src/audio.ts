@@ -2,6 +2,39 @@ export const mtof = (midi: number) => 440 * Math.pow(2, (midi - 69) / 12);
 
 export type ChannelName = 'bass' | 'pluck' | 'pad' | 'drums' | 'cello' | 'flute' | 'guitar' | 'hornpipe';
 
+export const STANZA_NAMES = ['Ode to Joy', 'Für Elise', 'Greensleeves'] as const;
+
+type StanzaNote = { step: number; note: number; dur: number };
+const STANZA_LIBRARY: { name: string; bars: StanzaNote[][] }[] = [
+  {
+    name: 'Ode to Joy',
+    bars: [
+      [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 76, dur: 0.5 }, { step: 8, note: 77, dur: 1.0 }, { step: 12, note: 79, dur: 1.0 }],
+      [{ step: 0, note: 79, dur: 1.5 }, { step: 6, note: 77, dur: 0.5 }, { step: 8, note: 76, dur: 1.0 }, { step: 12, note: 74, dur: 1.0 }],
+      [{ step: 0, note: 72, dur: 1.5 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 74, dur: 1.0 }, { step: 12, note: 76, dur: 1.0 }],
+      [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 74, dur: 0.5 }, { step: 8, note: 74, dur: 2.0 }],
+    ],
+  },
+  {
+    name: 'Für Elise',
+    bars: [
+      [{ step: 0, note: 76, dur: 0.5 }, { step: 6, note: 75, dur: 0.5 }, { step: 8, note: 76, dur: 0.5 }, { step: 12, note: 71, dur: 0.5 }],
+      [{ step: 0, note: 74, dur: 1.0 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 69, dur: 1.5 }],
+      [{ step: 0, note: 76, dur: 0.5 }, { step: 6, note: 75, dur: 0.5 }, { step: 8, note: 76, dur: 0.5 }, { step: 12, note: 71, dur: 0.5 }],
+      [{ step: 0, note: 74, dur: 1.0 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 69, dur: 2.0 }],
+    ],
+  },
+  {
+    name: 'Greensleeves',
+    bars: [
+      [{ step: 0, note: 69, dur: 1.5 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 74, dur: 1.0 }, { step: 12, note: 76, dur: 1.0 }],
+      [{ step: 0, note: 79, dur: 1.5 }, { step: 6, note: 77, dur: 0.5 }, { step: 8, note: 76, dur: 1.0 }, { step: 12, note: 74, dur: 1.0 }],
+      [{ step: 0, note: 72, dur: 1.5 }, { step: 6, note: 71, dur: 0.5 }, { step: 8, note: 67, dur: 1.0 }, { step: 12, note: 69, dur: 1.0 }],
+      [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 74, dur: 1.0 }, { step: 12, note: 76, dur: 2.0 }],
+    ],
+  },
+];
+
 export class MusicBoxEngine {
   ctx: AudioContext | null = null;
   masterGain: GainNode | null = null;
@@ -47,6 +80,28 @@ export class MusicBoxEngine {
     hornpipe: false,
   };
 
+  stanzas: Record<ChannelName, boolean> = {
+    bass: false,
+    pluck: false,
+    pad: false,
+    drums: false,
+    cello: false,
+    flute: false,
+    guitar: false,
+    hornpipe: false,
+  };
+
+  stanzaIndex: Record<ChannelName, number> = {
+    bass: 0,
+    pluck: 0,
+    pad: 0,
+    drums: 0,
+    cello: 0,
+    flute: 0,
+    guitar: 0,
+    hornpipe: 0,
+  };
+
   onStep?: (step: number) => void;
 
   init() {
@@ -75,6 +130,21 @@ export class MusicBoxEngine {
 
   toggleBach(name: ChannelName) {
     this.bachs[name] = !this.bachs[name];
+  }
+
+  toggleStanza(name: ChannelName) {
+    if (!this.stanzas[name]) {
+      this.stanzas[name] = true;
+      this.stanzaIndex[name] = 0;
+    } else {
+      const next = this.stanzaIndex[name] + 1;
+      if (next >= STANZA_LIBRARY.length) {
+        this.stanzas[name] = false;
+        this.stanzaIndex[name] = 0;
+      } else {
+        this.stanzaIndex[name] = next;
+      }
+    }
   }
 
   playBass(midi: number, time: number) {
@@ -495,13 +565,15 @@ export class MusicBoxEngine {
           const lhNotes = [bChord[0] - 12, bChord[2] - 12, bChord[1] - 12, bChord[3] - 24];
           this.playBass(lhNotes[lhStep % 4], time);
         }
-      } else if (this.leads.bass) {
+      }
+      if (this.leads.bass) {
         const pat = [0, 2, 3, 4, 6, 8, 10, 11, 12, 14];
         if (pat.includes(stepInBar)) {
           const isOctave = stepInBar === 14 || stepInBar === 6;
           this.playBass(root + (isOctave ? 12 : 0), time);
         }
-      } else {
+      }
+      if (!this.bachs.bass && !this.leads.bass) {
         if (stepInBar % 2 === 0) {
           if (stepInBar !== 14) {
             this.playBass(root, time);
@@ -510,6 +582,11 @@ export class MusicBoxEngine {
           this.playBass(root + 12, time);
         }
       }
+      if (this.stanzas.bass) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.bass];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playBass(sEv.note, time);
+      }
     }
 
     if (this.channels.pad) {
@@ -517,30 +594,44 @@ export class MusicBoxEngine {
         if (stepInBar % 4 === 0) {
           this.playPad(bChord, time, (60.0 / this.tempo) * 1);
         }
-      } else if (this.leads.pad) {
+      }
+      if (this.leads.pad) {
         if (stepInBar % 2 === 0) {
           this.playPad([root, ...chord], time, (60.0 / this.tempo) * 0.4);
         }
-      } else {
+      }
+      if (!this.bachs.pad && !this.leads.pad) {
         if (stepInBar === 0) {
           this.playPad([root, ...chord], time, (60.0 / this.tempo) * 4);
         }
+      }
+      if (this.stanzas.pad) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playPad([sEv.note], time, (60.0 / this.tempo) * sEv.dur);
       }
     }
 
     if (this.channels.pluck) {
       if (this.bachs.pluck) {
         this.playPluck(getBachRightHand(stepInBar), time);
-      } else if (this.leads.pluck) {
+      }
+      if (this.leads.pluck) {
         const noteIdx = stepInBar % 4;
         const arpNotes = [...chord, chord[1] + 12];
         this.playPluck(arpNotes[noteIdx], time);
-      } else {
+      }
+      if (!this.bachs.pluck && !this.leads.pluck) {
         const arpPattern = [0, 3, 6, 8, 11, 14];
         if (arpPattern.includes(stepInBar)) {
           const noteIdx = arpPattern.indexOf(stepInBar) % 3;
           this.playPluck(chord[noteIdx], time);
         }
+      }
+      if (this.stanzas.pluck) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playPluck(sEv.note, time);
       }
     }
 
@@ -558,11 +649,13 @@ export class MusicBoxEngine {
         else if (noteIdx === 1) this.playSnare(time);
         else if (noteIdx === 2) this.playHihat(time);
         else { this.playKick(time); this.playHihat(time); }
-      } else if (this.leads.drums) {
+      }
+      if (this.leads.drums) {
         if (stepInBar % 2 === 0 || stepInBar === 15) this.playKick(time);
         if (stepInBar === 4 || stepInBar === 12 || stepInBar === 14) this.playSnare(time);
         this.playHihat(time);
-      } else {
+      }
+      if (!this.bachs.drums && !this.leads.drums) {
         if (stepInBar % 4 === 0) {
           this.playKick(time);
         }
@@ -575,6 +668,17 @@ export class MusicBoxEngine {
           this.playHihat(time);
         }
       }
+      if (this.stanzas.drums) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.drums];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) {
+          const d = sEv.note % 4;
+          if (d === 0) this.playKick(time);
+          else if (d === 1) this.playSnare(time);
+          else if (d === 2) this.playHihat(time);
+          else { this.playKick(time); this.playHihat(time); }
+        }
+      }
     }
 
     if (this.channels.cello) {
@@ -583,15 +687,22 @@ export class MusicBoxEngine {
           const note = getBachRightHand(stepInBar);
           this.playCello(note - 12, time, (60.0 / this.tempo) * 0.5);
         }
-      } else if (this.leads.cello) {
+      }
+      if (this.leads.cello) {
         if (stepInBar === 0) this.playCello(chord[0] - 12, time, (60.0 / this.tempo) * 1);
         if (stepInBar === 4) this.playCello(chord[1] - 12, time, (60.0 / this.tempo) * 1);
         if (stepInBar === 8) this.playCello(chord[2] - 12, time, (60.0 / this.tempo) * 1);
         if (stepInBar === 12) this.playCello(chord[1] - 12, time, (60.0 / this.tempo) * 1);
-      } else {
+      }
+      if (!this.bachs.cello && !this.leads.cello) {
         if (stepInBar === 0) {
           this.playCello(root - 12, time, (60.0 / this.tempo) * 4);
         }
+      }
+      if (this.stanzas.cello) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.cello];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playCello(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
       }
     }
 
@@ -608,7 +719,8 @@ export class MusicBoxEngine {
         if (noteEvent) {
           this.playFlute(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
         }
-      } else if (this.leads.flute) {
+      }
+      if (this.leads.flute) {
         const melodyPattern = [
           { step: 0, note: chord[2] + 12, dur: 0.25 },
           { step: 2, note: chord[1] + 12, dur: 0.25 },
@@ -621,7 +733,8 @@ export class MusicBoxEngine {
         if (noteEvent) {
           this.playFlute(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
         }
-      } else {
+      }
+      if (!this.bachs.flute && !this.leads.flute) {
         const melodyPattern = [
           { step: 0, note: chord[2] + 12, dur: 1.5 },
           { step: 6, note: chord[1] + 12, dur: 0.5 },
@@ -632,6 +745,11 @@ export class MusicBoxEngine {
         if (noteEvent) {
           this.playFlute(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
         }
+      }
+      if (this.stanzas.flute) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.flute];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playFlute(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
       }
     }
 
@@ -656,17 +774,24 @@ export class MusicBoxEngine {
         if (ev) {
           this.playGuitar(bChord[ev.idx] + ev.oct, time, (60.0 / this.tempo) * ev.dur);
         }
-      } else if (this.leads.guitar) {
+      }
+      if (this.leads.guitar) {
         // Syncopated hits at melody register
         if ([0, 3, 6, 10, 14].includes(stepInBar)) {
           this.playGuitar(root, time, (60.0 / this.tempo) * 0.5);
         }
-      } else {
+      }
+      if (!this.bachs.guitar && !this.leads.guitar) {
         // Chugging power chords (root and fifth)
         if (stepInBar % 2 === 0) {
           this.playGuitar(root - 12, time, (60.0 / this.tempo) * 0.25);
           this.playGuitar(root - 5, time, (60.0 / this.tempo) * 0.25);
         }
+      }
+      if (this.stanzas.guitar) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playGuitar(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
       }
     }
 
@@ -676,7 +801,8 @@ export class MusicBoxEngine {
         if (stepInBar === 0) {
           this.playHornpipe(bChord[0] - 12, time, (60.0 / this.tempo) * 4);
         }
-      } else if (this.leads.hornpipe) {
+      }
+      if (this.leads.hornpipe) {
         // Folk melody variation
         const melodyPattern = [
           { step: 0, note: chord[2], dur: 0.5 },
@@ -692,11 +818,17 @@ export class MusicBoxEngine {
         if (noteEvent) {
           this.playHornpipe(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
         }
-      } else {
+      }
+      if (!this.bachs.hornpipe && !this.leads.hornpipe) {
         // Drone on the root of the scale (A)
         if (stepInBar === 0) {
           this.playHornpipe(57, time, (60.0 / this.tempo) * 4); // A3 drone
         }
+      }
+      if (this.stanzas.hornpipe) {
+        const sLib = STANZA_LIBRARY[this.stanzaIndex.hornpipe];
+        const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
+        if (sEv) this.playHornpipe(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
       }
     }
   }
