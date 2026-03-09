@@ -495,8 +495,17 @@ export class MusicBoxEngine {
 
     if (this.channels.flute) {
       if (this.bachs.flute) {
-        const note = getBachRightHand(stepInBar);
-        this.playFlute(note + 12, time, (60.0 / this.tempo) * 0.25);
+        // Gibbet Hill - Lament & Hornpipe variation (transposed to Am)
+        const gibbetMelody = [
+          [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 81, dur: 0.5 }, { step: 8, note: 83, dur: 1.0 }, { step: 12, note: 84, dur: 0.5 }, { step: 14, note: 83, dur: 0.5 }],
+          [{ step: 0, note: 81, dur: 1.5 }, { step: 6, note: 79, dur: 0.5 }, { step: 8, note: 81, dur: 1.0 }, { step: 12, note: 76, dur: 1.0 }],
+          [{ step: 0, note: 79, dur: 1.5 }, { step: 6, note: 81, dur: 0.5 }, { step: 8, note: 83, dur: 1.0 }, { step: 12, note: 84, dur: 0.5 }, { step: 14, note: 83, dur: 0.5 }],
+          [{ step: 0, note: 81, dur: 1.5 }, { step: 6, note: 79, dur: 0.5 }, { step: 8, note: 76, dur: 2.0 }]
+        ];
+        const noteEvent = gibbetMelody[bar].find(p => p.step === stepInBar);
+        if (noteEvent) {
+          this.playFlute(noteEvent.note, time, (60.0 / this.tempo) * noteEvent.dur);
+        }
       } else if (this.leads.flute) {
         const melodyPattern = [
           { step: 0, note: chord[2] + 12, dur: 0.25 },
