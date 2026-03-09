@@ -791,7 +791,8 @@ export class MusicBoxEngine {
       if (this.stanzas.guitar) {
         const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
         const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
-        if (sEv) this.playGuitar(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
+        // Guitars sustain — floor at 1 beat; drop 2 octaves from flute-range stanza notes
+        if (sEv) this.playGuitar(sEv.note - 24, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
       }
     }
 
@@ -828,7 +829,8 @@ export class MusicBoxEngine {
       if (this.stanzas.hornpipe) {
         const sLib = STANZA_LIBRARY[this.stanzaIndex.hornpipe];
         const sEv = sLib.bars[bar].find(p => p.step === stepInBar);
-        if (sEv) this.playHornpipe(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
+        // Hornpipe is a wind instrument — sustain at least a quarter note
+        if (sEv) this.playHornpipe(sEv.note, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
       }
     }
   }
