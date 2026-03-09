@@ -1,16 +1,37 @@
 # The Mountain — Groove Box
 
-> A browser-based 6-channel generative music mixer with per-channel Lead and Bach modes. Runs entirely in the browser — no server, no account, no cost. Built with Web Audio API, React 19, Vite, and TypeScript.
+> A browser-based 6-channel generative music mixer. Runs entirely in the browser — no server, no account, no install. Built with Web Audio API, React 19, Vite, TypeScript.
 
-## What it does
+## What it sounds like
 
-Six instruments — bass, pluck, pad, drums, cello, flute — each running a generative loop over a repeating Am→G→C→F 4-bar progression. Every channel has three behavioral modes:
+The piece never stops. It loops a four-bar progression — Am → G → C → F — at 110 BPM by default, 16 steps per bar, 64 steps total. The underlying character is melancholy with warmth underneath: the Am holds weight without being dark, the F resolves it. You can change the tempo from about 60 to 180 BPM; at 60 it becomes a slow meditation, at 180 it becomes mechanical.
 
-- **Normal** — steady rhythmic pattern
-- **Lead ⚡** — takes the melodic foreground, improvises above the bed
-- **Bach `[CPU]`** — plays a contrapuntal two-voice (left hand / right hand) arrangement using Am7/G7/Cmaj7/Fmaj7 voicings. Bar 3 triggers a Fibonacci-indexed variant.
+The default state (what you hear when you press play) is three voices: **pad**, **pluck**, **bass**. The pad is a chord wash — one long sawtooth-filtered chord per bar, almost no attack, fades smoothly. The pluck is a sparse 6-note arpeggio, like a harpsichord touching the chord tones at odd intervals. The bass is a triangle wave hitting on even 16th steps with a low-frequency punch, a quiet octave anticipation before each bar change. Together this baseline is calm, floating, harmonic — no drums, no drama.
 
-Channels can stack freely. The whole thing runs offline.
+Drums, cello, and flute are off by default. Turning them on adds:
+- **Drums**: electronic — clean sinusoidal kick (150Hz sweep), white-noise snare highpassed at 1kHz, very tight hihat at 5kHz. Standard 4-on-the-floor kick pattern, 2-and-4 snare.
+- **Cello**: two slightly detuned sawtooth+triangle oscillators (freq × 0.998) with 5Hz vibrato LFO and a filter that swells open through the middle of each note. In normal mode, it's a single drone per bar — the root note held for four full beats. It's the most "body" you can add without changing the harmonic character.
+- **Flute**: a sine tone plus bandpass-filtered breath noise at the same frequency, with a delayed vibrato that ramps in from silence over the first half-second (true to real flute physics). In normal mode, four notes per bar: the fifth of the chord held 1.5 beats, then a brief inner-voice dip, back up, then the root on top for the last beat. Airy, high, patient.
+
+## The three modes
+
+Every channel has three behavioral modes toggled independently:
+
+**Normal** — the resting pattern. Rhythmically simple, harmonically complete. Plays the structural role of the instrument (bass on beats, pad as chord wash, pluck as arpeggio, cello as drone, flute as long-tone melody).
+
+**Lead ⚡** — takes the foreground. Every instrument's lead mode increases density and melodic complexity: bass gets a syncopated 10-note run with octave leaps, pluck becomes a continuous 16th-note arpeggio (every step), drums add a ghost snare and hihat on every 16th, cello moves through quarter-note chord tones, flute gets a tighter 6-note melodic figure.
+
+**Bach [CPU]** — two-voice counterpoint. Each channel plays a miniature Baroque-style part derived from 7th-chord voicings: Am7, G7, Cmaj7, Fmaj7. Bass plays an alternating bass pattern cycling through {root, third, second, double-bass-octave}. Pluck plays the right-hand part. The right-hand logic is deterministic but constructive: bar 0 cycles chord tones ascending with octave alternation, bar 1 descends, bar 2 alternates root with ascending motion, and **bar 3 indexes by Fibonacci numbers** — `fib[step] % 4` chooses the note, `fib[step] % 2` chooses the octave. Because Fibonacci grows geometrically, the modular arithmetic produces a sequence that doesn't repeat within the bar, sounds improvised, but is entirely deterministic and identical every loop. Cello plays this same right-hand melody transposed down an octave. Flute plays it two octaves up, every 16th note, a fast cascade.
+
+When all six channels are in Bach mode simultaneously, you have twelve independent contrapuntal voices (two per original channel) all derived from the same four-bar chord sequence, all coherent, never clashing.
+
+## The visual
+
+A ring of 16 dots — the 16 steps of the current bar — with one lit at the current position. The current chord name floats at center: Am, G, C, F. The ring spins at tempo.
+
+## Interaction design
+
+There are no presets, no save states, no undo. You're not composing — you're discovering. The combinatorial space is 6 channels × 3 modes = roughly 3^6 = 729 distinct configurations (ignoring channel on/off). Most of them are interesting. A few are overwhelming. Some are surprisingly sparse. You find them by touching things.
 
 ## Live
 
