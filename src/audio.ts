@@ -637,8 +637,11 @@ export class MusicBoxEngine {
 
     if (this.channels.guitar) {
       if (this.bachs.guitar) {
-        const note = getBachRightHand(stepInBar);
-        this.playGuitar(note, time, (60.0 / this.tempo) * 0.25);
+        // Quarter-note power chord pulse — hard rhythmic anchor beneath the melody
+        if (stepInBar % 4 === 0) {
+          this.playGuitar(bChord[0] - 12, time, (60.0 / this.tempo) * 0.9);
+          this.playGuitar(bChord[0] - 5, time, (60.0 / this.tempo) * 0.9);
+        }
       } else if (this.leads.guitar) {
         // Syncopated hits at melody register
         if ([0, 3, 6, 10, 14].includes(stepInBar)) {
@@ -655,8 +658,10 @@ export class MusicBoxEngine {
 
     if (this.channels.hornpipe) {
       if (this.bachs.hornpipe) {
-        const note = getBachRightHand(stepInBar);
-        this.playHornpipe(note, time, (60.0 / this.tempo) * 0.25);
+        // Whole-bar pedal drone on the chord root — true drone pipe behaviour
+        if (stepInBar === 0) {
+          this.playHornpipe(bChord[0] - 12, time, (60.0 / this.tempo) * 4);
+        }
       } else if (this.leads.hornpipe) {
         // Folk melody variation
         const melodyPattern = [
