@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame, Star } from 'lucide-react';
+import { Play, Square, Settings2, Music, Drum, Wind, Waves, Guitar, Layers, Volume2, Zap, Cpu, Flame, Star, BookOpen, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { MusicBoxEngine, ChannelName, StanzaName, STANZA_DATA, STANZA_LIBRARY } from './audio';
 
@@ -23,6 +23,7 @@ export default function App() {
   const [liveStanza, setLiveStanza] = useState<StanzaName>(engine.liveStanza);
   const [view, setView] = useState<'live' | 'grid'>('live');
   const [stanzas, setStanzas] = useState<Record<ChannelName, boolean>>(engine.stanzas);
+  const [showStory, setShowStory] = useState(false);
   // Force update for composition grid
   const [, setTick] = useState(0);
 
@@ -123,16 +124,52 @@ export default function App() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-900/10 rounded-full blur-[80px] opacity-50 mix-blend-screen" />
       </div>
 
+      {/* Story Modal */}
+      {showStory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#0f1115] border border-white/10 rounded-2xl max-w-2xl w-full p-8 shadow-2xl relative overflow-hidden"
+          >
+            <button 
+              onClick={() => setShowStory(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="space-y-4 text-slate-300 font-serif leading-relaxed h-[60vh] overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <p>Long ago noble Uncus, son of noble chief Chingachgook, spoke and said in this wise:</p>
+              <p>"My father, the land is vast, but I seek to know more than beyond our forests and prairies. I seek a challenge, that I might know more."</p>
+              <p>And the chief reasoned, and spoke: "Go to the mountain peak in the distance. There you will find the challenge you seek."</p>
+              <p>And noble Uncus heeded his father's quest, and set off prepared. He faced challenges. He hunted, he fought weather, he fought storm, and isolation, and challenges that none would aid in overcoming.</p>
+              <p>And finally he stood upon the mountain, but to his shock he found the peak... snowy. Empty. Endless mountains spiraled out before him, each one as perilous.</p>
+              <p>He worried that he had done something wrong. His father does not speak false. Lying just isn't in their culture, if he knew what a culture was.</p>
+              <p>So Uncus... dragged his feet on his return. He felt confused.</p>
+              <p>"Oh my father, I have traveled long and far seeking knowledge and found... nothing...?"</p>
+              <p>This concerned the good chief, who then asked, "Well what did you see atop the mountain?"</p>
+              <p>"Nothing. Everything. I saw home. I saw the forests and the prairies, but away I just saw more mountains," his son replied.</p>
+              <p>And the chief nodded, and hugged his son.</p>
+              <div className="pt-6 mt-6 border-t border-white/10 text-center font-sans tracking-widest text-indigo-300/80 text-sm">
+                IN HONOR OF STEVEN "BUFFALO WIND" CASE
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       <div className="z-10 flex flex-col xl:flex-row xl:justify-center xl:items-center items-center gap-12 w-full max-w-[1600px] mx-auto p-6 xl:p-10">
 
         {/* â”€â”€â”€ LEFT COLUMN: Visualizer + Transport â”€â”€â”€ */}
         <div className="flex flex-col items-center gap-6 w-full xl:w-[360px] shrink-0">
 
           {/* Header */}
-          <div className="text-center">
+          <div className="text-center group relative cursor-pointer" onClick={() => setShowStory(true)}>
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 rounded-2xl transition-colors -m-2" />
             <h1 className="font-display text-3xl font-light tracking-tight text-white flex items-center justify-center gap-3">
               <Music className="w-5 h-5 text-indigo-400" />
               The Mountain
+              <BookOpen className="w-4 h-4 text-indigo-400/50 group-hover:text-indigo-400 transition-colors" />
             </h1>
             <p className="text-slate-500 text-xs tracking-widest uppercase mt-1">Hypnotic Groove Box</p>
           </div>
