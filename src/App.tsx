@@ -4,6 +4,13 @@ import { motion } from 'motion/react';
 import { MusicBoxEngine, ChannelName, StanzaName, STANZA_DATA, STANZA_LIBRARY } from './audio';
 
 const engine = new MusicBoxEngine();
+// @ts-ignore
+if (import.meta.hot) {
+  // @ts-ignore
+  import.meta.hot.dispose(() => {
+    engine.stop();
+  });
+}
 
 export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -15,11 +22,14 @@ export default function App() {
   const [bachs, setBachs] = useState<Record<ChannelName, boolean>>(engine.bachs);
   const [currentStanza, setCurrentStanza] = useState<StanzaName>(engine.currentStanza);
   const [view, setView] = useState<'live' | 'grid'>('live');
-  // Keep engine in sync with the initial default
-  engine.view = 'live';
   const [stanzas, setStanzas] = useState<Record<ChannelName, boolean>>(engine.stanzas);
   // Force update for composition grid
   const [, setTick] = useState(0);
+
+  // Auto-sync engine state with React state to survive Vite HMR reloads
+  useEffect(() => {
+    engine.view = view;
+  }, [view]);
 
   useEffect(() => {
     engine.onStep = (step) => {
@@ -233,7 +243,16 @@ export default function App() {
           {/* Mode Toggle */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { const m = view === 'live' ? 'grid' : 'live'; engine.view = m; setView(m); }}
+              onClick={() => {
+                const m = view === 'live' ? 'grid' : 'live';
+                engine.view = m;
+                setView(m);
+                // Stop and restart to flush any already-buffered notes from the previous mode
+                if (isPlaying) {
+                  engine.stop();
+                  engine.start();
+                }
+              }}
               className="px-6 py-2 rounded-full text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 transition-colors uppercase tracking-widest"
             >
               {view === 'grid' ? 'Live Mode' : 'Composition Mode'}

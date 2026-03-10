@@ -862,90 +862,15 @@ export class MusicBoxEngine {
       }
     }
     if (isModeActive('saxophone', 'base')) {
-      // Drone on the root of the scale (A)
       if (stepInBar === 0) {
         this.playSaxophone(57, time, (60.0 / this.tempo) * 4); // A3 drone
-    
-    if (isModeActive('pad', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playPad([sEv.note, sEv.note+4, sEv.note+7], time, (60.0 / this.tempo) * sEv.dur);
-    }
-    if (isModeActive('pluck', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playPluck(sEv.note, time);
-    }
-    if (isModeActive('drums', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.drums];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) {
-        const d = sEv.note % 4;
-        if (d === 0) this.playKick(time);
-        else if (d === 1) this.playSnare(time);
-        else if (d === 2) this.playHihat(time);
-        else { this.playKick(time); this.playHihat(time); }
       }
     }
-    if (isModeActive('flute', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.flute];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playFlute(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
-    }
-    if (isModeActive('guitar', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playGuitar(sEv.note - 24, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
-    }
-    if (isModeActive('saxophone', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.saxophone];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playSaxophone(sEv.note, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
-    }
-  }
-  
-    if (isModeActive('pad', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playPad([sEv.note, sEv.note+4, sEv.note+7], time, (60.0 / this.tempo) * sEv.dur);
-    }
-    if (isModeActive('pluck', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playPluck(sEv.note, time);
-    }
-    if (isModeActive('drums', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.drums];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) {
-        const d = sEv.note % 4;
-        if (d === 0) this.playKick(time);
-        else if (d === 1) this.playSnare(time);
-        else if (d === 2) this.playHihat(time);
-        else { this.playKick(time); this.playHihat(time); }
-      }
-    }
-    if (isModeActive('flute', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.flute];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playFlute(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
-    }
-    if (isModeActive('guitar', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playGuitar(sEv.note - 24, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
-    }
-    if (isModeActive('saxophone', 'stanza')) {
-      const sLib = STANZA_LIBRARY[this.stanzaIndex.saxophone];
-      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playSaxophone(sEv.note, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
-    }
-  }
 
     if (isModeActive('pad', 'stanza')) {
       const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
       const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
-      if (sEv) this.playPad([sEv.note, sEv.note+4, sEv.note+7], time, (60.0 / this.tempo) * sEv.dur);
+      if (sEv) this.playPad([sEv.note, sEv.note + 4, sEv.note + 7], time, (60.0 / this.tempo) * sEv.dur);
     }
     if (isModeActive('pluck', 'stanza')) {
       const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
