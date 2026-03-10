@@ -115,7 +115,7 @@ export default function App() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] text-slate-200 flex items-start justify-center font-sans selection:bg-indigo-500/30 relative overflow-y-auto">
+    <div className="min-h-screen bg-[#0a0a0c] text-slate-200 flex items-center justify-center font-sans selection:bg-indigo-500/30 relative overflow-y-auto">
 
       {/* Background Atmosphere */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -123,7 +123,7 @@ export default function App() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-900/10 rounded-full blur-[80px] opacity-50 mix-blend-screen" />
       </div>
 
-      <div className="z-10 flex flex-col xl:flex-row xl:items-start items-center gap-8 w-full p-6 xl:p-10">
+      <div className="z-10 flex flex-col xl:flex-row xl:justify-center xl:items-center items-center gap-12 w-full max-w-[1600px] mx-auto p-6 xl:p-10">
 
         {/* â”€â”€â”€ LEFT COLUMN: Visualizer + Transport â”€â”€â”€ */}
         <div className="flex flex-col items-center gap-6 w-full xl:w-[360px] shrink-0">
