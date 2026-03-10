@@ -51,7 +51,39 @@ export const STANZA_DATA: Record<StanzaName, { roots: number[], chords: number[]
   }
 };
 
-export type StepModes = { base: boolean; lead: boolean; bach: boolean };
+export const STANZA_NAMES = ['Ode to Joy', 'Für Elise', 'Greensleeves'] as const;
+type StanzaNote = { step: number; note: number; dur: number };
+export let STANZA_LIBRARY: { name: string; bars: StanzaNote[][] }[] = [
+  {
+    name: 'Ode to Joy',
+    bars: [
+      [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 76, dur: 0.5 }, { step: 8, note: 77, dur: 1.0 }, { step: 12, note: 79, dur: 1.0 }],
+      [{ step: 0, note: 79, dur: 1.5 }, { step: 6, note: 77, dur: 0.5 }, { step: 8, note: 76, dur: 1.0 }, { step: 12, note: 74, dur: 1.0 }],
+      [{ step: 0, note: 72, dur: 1.5 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 74, dur: 1.0 }, { step: 12, note: 76, dur: 1.0 }],
+      [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 74, dur: 0.5 }, { step: 8, note: 74, dur: 2.0 }],
+    ],
+  },
+  {
+    name: 'Für Elise',
+    bars: [
+      [{ step: 0, note: 76, dur: 0.5 }, { step: 6, note: 75, dur: 0.5 }, { step: 8, note: 76, dur: 0.5 }, { step: 12, note: 71, dur: 0.5 }],
+      [{ step: 0, note: 74, dur: 1.0 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 69, dur: 1.5 }],
+      [{ step: 0, note: 76, dur: 0.5 }, { step: 6, note: 75, dur: 0.5 }, { step: 8, note: 76, dur: 0.5 }, { step: 12, note: 71, dur: 0.5 }],
+      [{ step: 0, note: 74, dur: 1.0 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 69, dur: 2.0 }],
+    ],
+  },
+  {
+    name: 'Greensleeves',
+    bars: [
+      [{ step: 0, note: 69, dur: 1.5 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 74, dur: 1.0 }, { step: 12, note: 76, dur: 1.0 }],
+      [{ step: 0, note: 79, dur: 1.5 }, { step: 6, note: 77, dur: 0.5 }, { step: 8, note: 76, dur: 1.0 }, { step: 12, note: 74, dur: 1.0 }],
+      [{ step: 0, note: 72, dur: 1.5 }, { step: 6, note: 71, dur: 0.5 }, { step: 8, note: 67, dur: 1.0 }, { step: 12, note: 69, dur: 1.0 }],
+      [{ step: 0, note: 76, dur: 1.5 }, { step: 6, note: 72, dur: 0.5 }, { step: 8, note: 74, dur: 1.0 }, { step: 12, note: 76, dur: 2.0 }],
+    ],
+  },
+];
+
+export type StepModes = { base: boolean; lead: boolean; bach: boolean; stanza: boolean };
 
 export class MusicBoxEngine {
   ctx: AudioContext | null = null;
@@ -68,16 +100,26 @@ export class MusicBoxEngine {
   currentStanza: StanzaName = 'subdominant';
   view: 'live' | 'grid' = 'live';
   compositionGrid: Record<ChannelName, StepModes[]> = {
-    bass: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    pluck: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    pad: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    drums: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    cello: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    flute: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    guitar: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
-    saxophone: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false })),
+    bass: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    pluck: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    pad: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    drums: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    cello: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    flute: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    guitar: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
+    saxophone: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
   };
   viewStanzas: StanzaName[] = Array(16).fill('subdominant');
+
+  stanzas: Record<ChannelName, boolean> = {
+    bass: false, pluck: false, pad: false, drums: false,
+    cello: false, flute: false, guitar: false, saxophone: false,
+  };
+
+  stanzaIndex: Record<ChannelName, number> = {
+    bass: 0, pluck: 0, pad: 0, drums: 0,
+    cello: 0, flute: 0, guitar: 0, saxophone: 0,
+  };
 
   channels: Record<ChannelName, boolean> = {
     bass: true,
@@ -140,6 +182,21 @@ export class MusicBoxEngine {
 
   toggleBach(name: ChannelName) {
     this.bachs[name] = !this.bachs[name];
+  }
+
+  toggleStanza(name: ChannelName) {
+    if (!this.stanzas[name]) {
+      this.stanzas[name] = true;
+      this.stanzaIndex[name] = 0;
+    } else {
+      const next = this.stanzaIndex[name] + 1;
+      if (next >= STANZA_LIBRARY.length) {
+        this.stanzas[name] = false;
+        this.stanzaIndex[name] = 0;
+      } else {
+        this.stanzaIndex[name] = next;
+      }
+    }
   }
 
   playBass(midi: number, time: number) {
@@ -562,7 +619,7 @@ export class MusicBoxEngine {
     const stepInBar = stepNumber % 16;
     const seqStep = bar % 16; // 16 measures in the sequence
 
-    if (this.view) {
+    if (this.view === 'grid') {
       this.currentStanza = this.viewStanzas[seqStep];
     }
 
@@ -575,14 +632,15 @@ export class MusicBoxEngine {
     const chord = chords[bar % 4];
     const bChord = bachChords[bar % 4];
 
-    const isModeActive = (name: ChannelName, mode: 'base' | 'lead' | 'bach') => {
-      if (this.view) {
+    const isModeActive = (name: ChannelName, mode: 'base' | 'lead' | 'bach' | 'stanza') => {
+      if (this.view === 'grid') {
         return this.compositionGrid[name][seqStep][mode];
       }
       if (!this.channels[name]) return false;
+      if (mode === 'stanza') return this.stanzas[name];
       if (mode === 'bach') return this.bachs[name];
       if (mode === 'lead') return this.leads[name];
-      return !this.bachs[name] && !this.leads[name];
+      return !this.bachs[name] && !this.leads[name] && !this.stanzas[name];
     };
 
     const getBachRightHand = (step: number) => {
@@ -628,6 +686,11 @@ export class MusicBoxEngine {
       } else if (stepInBar === 13) {
         this.playBass(root + 12, time);
       }
+    }
+    if (isModeActive('bass', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.bass];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playBass(sEv.note - 12, time);
     }
 
     if (isModeActive('pad', 'bach')) {
@@ -713,6 +776,11 @@ export class MusicBoxEngine {
         this.playCello(root - 12, time, (60.0 / this.tempo) * 4);
       }
     }
+    if (isModeActive('cello', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.cello];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playCello(sEv.note - 12, time, (60.0 / this.tempo) * sEv.dur);
+    }
 
     if (isModeActive('flute', 'bach')) {
       // Gibbet Hill - Lament & Hornpipe variation (transposed to Am)
@@ -797,7 +865,118 @@ export class MusicBoxEngine {
       // Drone on the root of the scale (A)
       if (stepInBar === 0) {
         this.playSaxophone(57, time, (60.0 / this.tempo) * 4); // A3 drone
+    
+    if (isModeActive('pad', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playPad([sEv.note, sEv.note+4, sEv.note+7], time, (60.0 / this.tempo) * sEv.dur);
+    }
+    if (isModeActive('pluck', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playPluck(sEv.note, time);
+    }
+    if (isModeActive('drums', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.drums];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) {
+        const d = sEv.note % 4;
+        if (d === 0) this.playKick(time);
+        else if (d === 1) this.playSnare(time);
+        else if (d === 2) this.playHihat(time);
+        else { this.playKick(time); this.playHihat(time); }
       }
+    }
+    if (isModeActive('flute', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.flute];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playFlute(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
+    }
+    if (isModeActive('guitar', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playGuitar(sEv.note - 24, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
+    }
+    if (isModeActive('saxophone', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.saxophone];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playSaxophone(sEv.note, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
+    }
+  }
+  
+    if (isModeActive('pad', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playPad([sEv.note, sEv.note+4, sEv.note+7], time, (60.0 / this.tempo) * sEv.dur);
+    }
+    if (isModeActive('pluck', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playPluck(sEv.note, time);
+    }
+    if (isModeActive('drums', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.drums];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) {
+        const d = sEv.note % 4;
+        if (d === 0) this.playKick(time);
+        else if (d === 1) this.playSnare(time);
+        else if (d === 2) this.playHihat(time);
+        else { this.playKick(time); this.playHihat(time); }
+      }
+    }
+    if (isModeActive('flute', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.flute];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playFlute(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
+    }
+    if (isModeActive('guitar', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playGuitar(sEv.note - 24, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
+    }
+    if (isModeActive('saxophone', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.saxophone];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playSaxophone(sEv.note, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
+    }
+  }
+
+    if (isModeActive('pad', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.pad];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playPad([sEv.note, sEv.note+4, sEv.note+7], time, (60.0 / this.tempo) * sEv.dur);
+    }
+    if (isModeActive('pluck', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.pluck];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playPluck(sEv.note, time);
+    }
+    if (isModeActive('drums', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.drums];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) {
+        const d = sEv.note % 4;
+        if (d === 0) this.playKick(time);
+        else if (d === 1) this.playSnare(time);
+        else if (d === 2) this.playHihat(time);
+        else { this.playKick(time); this.playHihat(time); }
+      }
+    }
+    if (isModeActive('flute', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.flute];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playFlute(sEv.note, time, (60.0 / this.tempo) * sEv.dur);
+    }
+    if (isModeActive('guitar', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.guitar];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playGuitar(sEv.note - 24, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
+    }
+    if (isModeActive('saxophone', 'stanza')) {
+      const sLib = STANZA_LIBRARY[this.stanzaIndex.saxophone];
+      const sEv = sLib.bars[bar % 4].find(p => p.step === stepInBar);
+      if (sEv) this.playSaxophone(sEv.note, time, (60.0 / this.tempo) * Math.max(sEv.dur, 1.0));
     }
   }
 
