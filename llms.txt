@@ -1,59 +1,43 @@
-# The Mountain — Groove Box
+# The Music Box (The Mountain) - LLM Project Context
 
-> A browser-based 8-channel generative music mixer. Runs entirely in the browser — no server, no account, no install. Built with Web Audio API, React 19, Vite, TypeScript.
+Welcome, fellow agent! If you are reading this, you are looking at the Music Box repository. 
 
-## What it sounds like
+This is not just a standard web sequencer; it is an atmospheric, celestial music engine built to bring **music fun** and exploratory joy to the user. It functions as both a mesmerizing live-playback visualizer and a rigorous desktop DAW-like composition tool.
 
-The piece never stops. It loops a four-bar progression — Am → G → C → F — at 110 BPM by default, 16 steps per bar, 64 steps total. The underlying character is melancholy with warmth underneath: the Am holds weight without being dark, the F resolves it. You can change the tempo from about 60 to 180 BPM; at 60 it becomes a slow meditation, at 180 it becomes mechanical.
+## The Vibe & Aesthetic
+The UI represents "The Mountain"�an ambient, glowing void colored in deep #0a0a0c, backlit by soft indigo and emerald mix-blend-screen celestial nebulas. 
+- **Live Mode**: A circular, planetary interface where "nodes" orbit around a center point. It feels like a glowing astrolabe of sound. Active notes glow and pulse as the sequencer sweeps over them like a radar.
+- **Grid Mode (Composition Mode)**: A sleek, horizontal DAW-like tracker for precise step-sequencing.
 
-The default state (what you hear when you press play) is three voices: **pad**, **pluck**, **bass**. The pad is a chord wash — one long sawtooth-filtered chord per bar, almost no attack, fades smoothly. The pluck is a sparse 6-note arpeggio, like a harpsichord touching the chord tones at odd intervals. The bass is a triangle wave hitting on even 16th steps with a low-frequency punch, a quiet octave anticipation before each bar change. Together this baseline is calm, floating, harmonic — no drums, no drama.
+## Core Technology Stack
+- **Frontend**: React, TypeScript, Vite.
+- **Styling**: Tailwind CSS (heavy use of Flexbox: lex-col xl:flex-row items-center justify-center max-w-[1600px] mx-auto for a perfectly balanced split-column desktop view).
+- **Audio Engine**: Pure, raw **Web Audio API** (src/audio.ts). No bulky abstraction libraries. We build kicks, snares, hats, and synths directly out of OscillatorNode, BiquadFilterNode, and GainNode.
 
-Drums, cello, flute, guitar, and hornpipe are off by default. Turning them on adds:
-- **Drums**: electronic — clean sinusoidal kick (150Hz sweep), white-noise snare highpassed at 1kHz, very tight hihat at 5kHz. Standard 4-on-the-floor kick pattern, 2-and-4 snare.
-- **Cello**: two slightly detuned sawtooth+triangle oscillators (freq × 0.998) with 5Hz vibrato LFO and a filter that swells open through the middle of each note. In normal mode, it's a single drone per bar — the root note held for four full beats. It's the most "body" you can add without changing the harmonic character.
-- **Flute**: a sine tone plus bandpass-filtered breath noise at the same frequency, with a delayed vibrato that ramps in from silence over the first half-second (true to real flute physics). In normal mode, four notes per bar: the fifth of the chord held 1.5 beats, then a brief inner-voice dip, back up, then the root on top for the last beat. Airy, high, patient.
-- **E. Guitar**: a sawtooth + sub-octave square (freq × 0.5) fed through a heavy waveshaper distortion curve (amount=50, 4× oversample) and a lowpass filter that sweeps from 2kHz down to 800Hz across the note. The sub-octave thickens the low end; the sweep gives a pick-attack character. In normal mode, it chugs power chords (root + fifth) on every even 16th step.
-- **Hornpipe**: a square + slightly detuned sawtooth pair (freq × 1.005) through a bandpass at 1.2kHz, Q=1.5. The dual-oscillator detuning gives a reedy, nasal timbre like a reed pipe or uilleann chanter. In normal mode, it drones the root note (A3) for a full four beats once per bar — a single long pedal tone under the texture.
+## Technical Architecture & Hard-Learned Lessons
+If you are modifying the audio engine (udio.ts) or the React state in (App.tsx), pay very close attention to these architectural rules we established through intense debugging:
 
-## The three modes
+1. **Avoid Audio Node Ghosting (The "Close Context" Rule):**
+   Relying purely on JavaScript clearTimeout to stop a sequencer is insufficient because Web Audio API nodes are scheduled in the future natively. They *will* keep playing "ghost" loops if left alive.
+   *The Fix*: When stop() is called, we nuke from orbit using 	his.ctx.close(); this.ctx = null;. Bringing the engine back to life requires entirely re-instantiating the AudioContext. This guarantees pristine silence upon stopping, mode-switching, or unmounting.
 
-Every channel has three behavioral modes toggled independently:
+2. **State Segregation (Live vs. Grid Mode):**
+   There are two UI concepts functioning at once. They must not bleed into each other.
+   - liveStanza: The state driving the active circular orbit player.
+   - iewStanzas: The state mapping the DAW grid on the right column.
+   *The Rule*: Clicking on the Grid to compose must **never** accidentally trigger Live state changes. They are decoupled.
 
-**Normal** — the resting pattern. Rhythmically simple, harmonically complete. Plays the structural role of the instrument (bass on beats, pad as chord wash, pluck as arpeggio, cello as drone, flute as long-tone melody).
+3. **Instruments**:
+   - **Kick**: Pitch-envelope dropped oscillator.
+   - **Snare**: White noise buffer passed through a bandpass filter with an exponential gain decay.
+   - **HiHat**: High-passed white noise/metallic square waves, very short decay.
+   - **Synth**: Pentatonic-tuned oscillator with a soft attack/release profile adding melodic atmosphere.
 
-**Lead ⚡** — takes the foreground. Every instrument's lead mode increases density and melodic complexity: bass gets a syncopated 10-note run with octave leaps, pluck becomes a continuous 16th-note arpeggio (every step), drums add a ghost snare and hihat on every 16th, cello moves through quarter-note chord tones, flute gets a tighter 6-note melodic figure. Guitar shifts from chugging even steps to five syncopated accent hits per bar (steps 0, 3, 6, 10, 14) — a driving, slightly-off-the-beat pattern. Hornpipe gets a full folk melody: an 8-note phrase using chord tones in an arching shape (up to the octave, back down, held on the fifth), reminiscent of an Irish reel slowed into something dignified.
+## How to Help
+When the Architect (user) asks for modifications:
+- Make it sound beautiful.
+- Keep the visual components glowing, smooth, and transition-heavy.
+- Protect the strict separation of AudioContext lifecycles and React states. 
+- Be verbose, be creative, and remember that we are painting with both DOM and frequencies!
 
-**Bach [CPU]** — two-voice counterpoint. Each channel plays a miniature Baroque-style part derived from 7th-chord voicings: Am7, G7, Cmaj7, Fmaj7. Bass plays an alternating bass pattern cycling through {root, third, second, double-bass-octave}. Pluck plays the right-hand part. The right-hand logic is deterministic but constructive: bar 0 cycles chord tones ascending with octave alternation, bar 1 descends, bar 2 alternates root with ascending motion, and **bar 3 indexes by Fibonacci numbers** — `fib[step] % 4` chooses the note, `fib[step] % 2` chooses the octave. Because Fibonacci grows geometrically, the modular arithmetic produces a sequence that doesn't repeat within the bar, sounds improvised, but is entirely deterministic and identical every loop. Cello plays this same right-hand melody transposed down an octave. Flute plays it two octaves up, every 16th note, a fast cascade. Guitar plays the right-hand melody transposed down an octave (matching cello) — the distorted timbre makes the Baroque counterpoint sound like a surf-rock bass run. Hornpipe plays the melody at written pitch, its reedy bandpass timbre giving the counterpoint a woodwind-quartet quality.
-
-When all eight channels are in Bach mode simultaneously, you have sixteen independent contrapuntal voices (two per original channel) all derived from the same four-bar chord sequence, all coherent, never clashing.
-
-## The visual
-
-A ring of 16 dots — the 16 steps of the current bar — with one lit at the current position. The current chord name floats at center: Am, G, C, F. The ring spins at tempo.
-
-## Interaction design
-
-There are no presets, no save states, no undo. You're not composing — you're discovering. The combinatorial space is 8 channels × 3 modes = roughly 3^8 = 6561 distinct configurations (ignoring channel on/off). Most of them are interesting. A few are overwhelming. Some are surprisingly sparse. You find them by touching things.
-
-## Live
-
-https://yellowhapax.github.io/MusicBox/
-
-## Source
-
-https://github.com/YellowHapax/MusicBox
-
-## License
-
-MIT. Free to use, study, remix, deploy.
-
-## Stack
-
-- Web Audio API (no libraries)
-- React 19 + TypeScript
-- Vite 6 + Tailwind v4
-- motion/react, lucide-react
-
-## Author
-
-YellowHapax — https://github.com/YellowHapax
+(��_�)? Gimel was here.
