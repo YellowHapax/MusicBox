@@ -97,7 +97,7 @@ export class MusicBoxEngine {
   nextNoteTime = 0.0;
   timerID: number | null = null;
 
-  currentStanza: StanzaName = 'subdominant';
+  liveStanza: StanzaName = 'subdominant';
   view: 'live' | 'grid' = 'live';
   compositionGrid: Record<ChannelName, StepModes[]> = {
     bass: Array(16).fill(null).map(() => ({ base: false, lead: false, bach: false, stanza: false })),
@@ -619,11 +619,8 @@ export class MusicBoxEngine {
     const stepInBar = stepNumber % 16;
     const seqStep = bar % 16; // 16 measures in the sequence
 
-    if (this.view === 'grid') {
-      this.currentStanza = this.viewStanzas[seqStep];
-    }
-
-    const stanzaData = STANZA_DATA[this.currentStanza];
+    const activeStanza = this.view === 'grid' ? this.viewStanzas[seqStep] : this.liveStanza;
+    const stanzaData = STANZA_DATA[activeStanza];
     const roots = stanzaData.roots;
     const chords = stanzaData.chords;
     const bachChords = stanzaData.bachChords;
@@ -931,6 +928,11 @@ export class MusicBoxEngine {
     if (this.timerID !== null) {
       window.clearTimeout(this.timerID);
       this.timerID = null;
+    }
+    // Deep flush audio context to destroy all scheduled Web Audio nodes
+    if (this.ctx) {
+      this.ctx.close();
+      this.ctx = null;
     }
   }
 }

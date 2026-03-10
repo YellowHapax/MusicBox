@@ -20,7 +20,7 @@ export default function App() {
   const [channels, setChannels] = useState<Record<ChannelName, boolean>>(engine.channels);
   const [leads, setLeads] = useState<Record<ChannelName, boolean>>(engine.leads);
   const [bachs, setBachs] = useState<Record<ChannelName, boolean>>(engine.bachs);
-  const [currentStanza, setCurrentStanza] = useState<StanzaName>(engine.currentStanza);
+  const [liveStanza, setLiveStanza] = useState<StanzaName>(engine.liveStanza);
   const [view, setView] = useState<'live' | 'grid'>('live');
   const [stanzas, setStanzas] = useState<Record<ChannelName, boolean>>(engine.stanzas);
   // Force update for composition grid
@@ -100,7 +100,7 @@ export default function App() {
   const stepInBar = currentStep % 16;
   const seqStep = bar % 16;
   
-  const activeStanza = view === 'grid' ? engine.viewStanzas[seqStep] : currentStanza;
+  const activeStanza = view === 'grid' ? engine.viewStanzas[seqStep] : liveStanza;
   const chords = STANZA_DATA[activeStanza].names || ['Am', 'G', 'C', 'F'];
   const currentChord = chords[bar % 4];
 
@@ -264,9 +264,9 @@ export default function App() {
             <div className="flex gap-2">
               {(['subdominant', 'tonic', 'dominant'] as StanzaName[]).map((stanza) => (
                 <button key={stanza}
-                  onClick={() => { engine.currentStanza = stanza; setCurrentStanza(stanza); }}
+                  onClick={() => { engine.liveStanza = stanza; setLiveStanza(stanza); }}
                   className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
-                    currentStanza === stanza ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                    liveStanza === stanza ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-white/5 text-slate-400 hover:bg-white/10'
                   }`}
                 >{stanza}</button>
               ))}
@@ -328,7 +328,7 @@ export default function App() {
                             className={`h-2 transition-all ${modes.lead ? 'bg-amber-500' : 'bg-white/5 hover:bg-white/15'}`} title="Lead" />
                           <button onClick={() => { engine.compositionGrid[name][i].bach = !modes.bach; setTick(t => t + 1); }}
                             className={`h-2 transition-all ${modes.bach ? 'bg-emerald-500' : 'bg-white/5 hover:bg-white/15'}`} title="Bach" />
-                          <button onClick={() => { engine.compositionGrid[name][i].stanza = !modes.stanza; engine.toggleStanza(name); setTick(t => t + 1); }}
+                          <button onClick={() => { engine.compositionGrid[name][i].stanza = !modes.stanza; setTick(t => t + 1); }}
                             className={`h-2 transition-all ${modes.stanza ? 'bg-rose-500' : 'bg-white/5 hover:bg-white/15'}`} title={`Stanza: ${STANZA_LIBRARY[engine.stanzaIndex[name]]?.name}`} />
                         </div>
                       );
