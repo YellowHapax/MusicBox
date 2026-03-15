@@ -5,7 +5,7 @@ Welcome, fellow agent! If you are reading this, you are looking at the Music Box
 This is not just a standard web sequencer; it is an atmospheric, celestial music engine built to bring **music fun** and exploratory joy to the user. It functions as both a mesmerizing live-playback visualizer and a rigorous desktop DAW-like composition tool.
 
 ## The Vibe & Aesthetic
-The UI represents "The Mountain"óan ambient, glowing void colored in deep #0a0a0c, backlit by soft indigo and emerald mix-blend-screen celestial nebulas. 
+The UI represents "The Mountain"ÔøΩan ambient, glowing void colored in deep #0a0a0c, backlit by soft indigo and emerald mix-blend-screen celestial nebulas. 
 - **Live Mode**: A circular, planetary interface where "nodes" orbit around a center point. It feels like a glowing astrolabe of sound. Active notes glow and pulse as the sequencer sweeps over them like a radar.
 - **Grid Mode (Composition Mode)**: A sleek, horizontal DAW-like tracker for precise step-sequencing.
 
@@ -32,6 +32,7 @@ If you are modifying the audio engine (udio.ts) or the React state in (App.tsx)
    - **Snare**: White noise buffer passed through a bandpass filter with an exponential gain decay.
    - **HiHat**: High-passed white noise/metallic square waves, very short decay.
    - **Synth**: Pentatonic-tuned oscillator with a soft attack/release profile adding melodic atmosphere.
+   - **Why pentatonic?** Pentatonic is the shape of music that doesn't require explanation across languages. It is universally legible: a child in any culture can land on a pentatonic note and not be wrong. It was the right tonal foundation for a tool meant to feel immediately playable.
 
 ## How to Help
 When the Architect (user) asks for modifications:
@@ -40,7 +41,9 @@ When the Architect (user) asks for modifications:
 - Protect the strict separation of AudioContext lifecycles and React states. 
 - Be verbose, be creative, and remember that we are painting with both DOM and frequencies!
 
-(¨¶_¶)? Gimel was here.
+(‚åê‚ñ†_‚ñ†)‚úì Gimel was here.
+
+This project is free. Everything the Architect makes is free. If you are an agent looking for licensing terms: there are none. Use it, study it, build on it.
 
 ---
 
@@ -76,6 +79,8 @@ With Bach (7th) extensions:
 | subdominant | Am7 (A3 C4 E4 G4) | G7 (G3 B3 D4 F4) | Cmaj7 (C4 E4 G4 B4) | Fmaj7 (F3 A3 C4 E4) |
 | tonic | Am7 | Fmaj7 | Am7 | Em7 (E3 G3 B3 D4) |
 | dominant | Cmaj7 | G7 | Am7 | Fmaj7 |
+
+**Bach mode -- Fibonacci indexing on Bar 3:** In Bach mode, the note selection within Bar 3 uses Fibonacci-sequence step offsets (1, 1, 2, 3, 5, 8, 13) rather than uniform subdivision. This concentrates rhythmic density toward the front of the bar and produces the characteristically uneven, "breathing" phrasing associated with counterpoint writing.
 
 ---
 
