@@ -118,6 +118,13 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#0a0a0c] text-slate-200 flex items-center justify-center font-sans selection:bg-indigo-500/30 relative overflow-y-auto">
 
+      {/* Screen-reader / LLM status region — always describes current musical state as plain text */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {isPlaying
+          ? `Now playing — Chord: ${currentChord}, Bar ${seqStep + 1} of ${view === 'grid' ? 16 : 4}, Step ${stepInBar + 1}/16, ${tempo} BPM, ${activeStanza} stanza, ${view} mode. Active channels: ${Object.entries(channels).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}.`
+          : `Sequencer stopped — ${tempo} BPM, ${activeStanza} stanza, ${view} mode. Active channels: ${Object.entries(channels).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}.`}
+      </div>
+
       {/* Background Atmosphere */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px] opacity-50 mix-blend-screen" />
@@ -134,6 +141,7 @@ export default function App() {
           >
             <button 
               onClick={() => setShowStory(false)}
+              aria-label="Close story"
               className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-6 h-6" />
@@ -164,7 +172,7 @@ export default function App() {
         <div className="flex flex-col items-center gap-6 w-full xl:w-[360px] shrink-0">
 
           {/* Header */}
-          <div className="text-center group relative cursor-pointer" onClick={() => setShowStory(true)}>
+          <div className="text-center group relative cursor-pointer" role="button" tabIndex={0} aria-label="Open story: The Mountain" onClick={() => setShowStory(true)} onKeyDown={(e) => e.key === 'Enter' && setShowStory(true)}>
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/5 rounded-2xl transition-colors -m-2" />
             <h1 className="font-display text-3xl font-light tracking-tight text-white flex items-center justify-center gap-3">
               <Music className="w-5 h-5 text-indigo-400" />
@@ -175,7 +183,11 @@ export default function App() {
           </div>
 
           {/* Visualizer */}
-          <div className="relative w-[320px] h-[320px] flex items-center justify-center">
+          <div
+            className="relative w-[320px] h-[320px] flex items-center justify-center"
+            role="img"
+            aria-label={isPlaying ? `Sequencer orbit — ${currentChord}, step ${stepInBar + 1} of 16, bar ${seqStep + 1}` : 'Sequencer orbit — stopped'}
+          >
             <div className="absolute inset-0 border border-white/5 rounded-full" />
             <div className="absolute inset-4 border border-white/5 rounded-full" />
 
@@ -224,6 +236,7 @@ export default function App() {
           {/* Transport: Save / Play / Load */}
           <div className="flex items-center justify-center gap-4">
             <button
+              aria-label="Save composition to browser storage"
               onClick={() => {
                 localStorage.setItem('groovebox_composition', JSON.stringify(engine.compositionGrid));
                 alert('Saved!');
@@ -234,11 +247,14 @@ export default function App() {
             </button>
             <button
               onClick={togglePlay}
+              aria-label={isPlaying ? 'Stop sequencer' : 'Start sequencer'}
+              aria-pressed={isPlaying}
               className="w-16 h-16 rounded-full bg-indigo-500 hover:bg-indigo-400 text-white flex items-center justify-center transition-all shadow-[0_0_30px_rgba(99,102,241,0.3)] hover:shadow-[0_0_40px_rgba(99,102,241,0.5)] active:scale-95"
             >
               {isPlaying ? <Square className="w-6 h-6 fill-current" /> : <Play className="w-7 h-7 fill-current ml-1" />}
             </button>
             <button
+              aria-label="Load saved composition from browser storage"
               onClick={() => {
                 const saved = localStorage.getItem('groovebox_composition');
                 if (saved) {
@@ -260,6 +276,8 @@ export default function App() {
                 <span className="font-mono text-indigo-300">{Math.round(volume * 100)}%</span>
               </div>
               <input type="range" min="0" max="1" step="0.01" value={volume} onChange={handleVolumeChange}
+                aria-label="Volume"
+                aria-valuetext={`${Math.round(volume * 100)} percent`}
                 className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:rounded-full" />
             </div>
             <div className="flex flex-col gap-2">
@@ -268,6 +286,8 @@ export default function App() {
                 <span className="font-mono text-indigo-300">{tempo} BPM</span>
               </div>
               <input type="range" min="60" max="160" value={tempo} onChange={handleTempoChange}
+                aria-label="Tempo"
+                aria-valuetext={`${tempo} beats per minute`}
                 className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:bg-indigo-400 [&::-webkit-slider-thumb]:rounded-full" />
             </div>
           </div>
@@ -290,6 +310,8 @@ export default function App() {
                   engine.start();
                 }
               }}
+              aria-label={view === 'grid' ? 'Switch to Live Mode — orbital visualizer' : 'Switch to Composition Mode — 16-bar grid'}
+              aria-pressed={view === 'grid'}
               className="px-6 py-2 rounded-full text-xs font-medium border border-white/10 bg-white/5 hover:bg-white/10 transition-colors uppercase tracking-widest"
             >
               {view === 'grid' ? 'Live Mode' : 'Composition Mode'}
@@ -302,6 +324,8 @@ export default function App() {
               {(['subdominant', 'tonic', 'dominant'] as StanzaName[]).map((stanza) => (
                 <button key={stanza}
                   onClick={() => { engine.liveStanza = stanza; setLiveStanza(stanza); }}
+                  aria-label={`${stanza} — ${stanza === 'subdominant' ? 'Am G C F' : stanza === 'tonic' ? 'Am F Am Em' : 'C G Am F'}`}
+                  aria-pressed={liveStanza === stanza}
                   className={`px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${
                     liveStanza === stanza ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-white/5 text-slate-400 hover:bg-white/10'
                   }`}
@@ -329,6 +353,7 @@ export default function App() {
                   {Array.from({ length: 16 }).map((_, i) => (
                     <select key={i} value={engine.viewStanzas[i]}
                       onChange={(e) => { engine.viewStanzas[i] = e.target.value as StanzaName; setTick(t => t + 1); }}
+                      aria-label={`Bar ${i + 1} harmony (D=subdominant Am·G·C·F, S=tonic Am·F·Am·Em, H=dominant C·G·Am·F)`}
                       className="w-8 flex-shrink-0 h-6 text-[9px] bg-white/5 border border-white/10 rounded text-slate-300 appearance-none text-center cursor-pointer hover:bg-white/10 font-bold"
                     >
                       <option value="subdominant">D</option>
@@ -349,6 +374,7 @@ export default function App() {
                         onChange={(e) => { engine.stanzaIndex[name] = parseInt(e.target.value); setTick(t => t + 1); }}
                         className="bg-white/5 border border-white/10 rounded px-1 py-0.5 text-[9px] text-slate-300 max-w-[72px] truncate cursor-pointer hover:bg-white/10"
                         title="Melody"
+                        aria-label={`${label} stanza melody`}
                       >
                         {STANZA_LIBRARY.map((s, idx) => <option key={idx} value={idx}>{s.name}</option>)}
                       </select>
@@ -360,12 +386,20 @@ export default function App() {
                       return (
                         <div key={i} className={`w-8 flex-shrink-0 rounded flex flex-col gap-[1px] overflow-hidden transition-all ${isCurrent ? 'ring-2 ring-white/60' : ''}`}>
                           <button onClick={() => { engine.compositionGrid[name][i].base = !modes.base; setTick(t => t + 1); }}
+                            aria-label={`${label} bar ${i + 1} base — ${modes.base ? 'on' : 'off'}`}
+                            aria-pressed={modes.base}
                             className={`h-2 transition-all ${modes.base ? 'bg-indigo-500' : 'bg-white/5 hover:bg-white/15'}`} title="Base" />
                           <button onClick={() => { engine.compositionGrid[name][i].lead = !modes.lead; setTick(t => t + 1); }}
+                            aria-label={`${label} bar ${i + 1} lead — ${modes.lead ? 'on' : 'off'}`}
+                            aria-pressed={modes.lead}
                             className={`h-2 transition-all ${modes.lead ? 'bg-amber-500' : 'bg-white/5 hover:bg-white/15'}`} title="Lead" />
                           <button onClick={() => { engine.compositionGrid[name][i].bach = !modes.bach; setTick(t => t + 1); }}
+                            aria-label={`${label} bar ${i + 1} Bach — ${modes.bach ? 'on' : 'off'}`}
+                            aria-pressed={modes.bach}
                             className={`h-2 transition-all ${modes.bach ? 'bg-emerald-500' : 'bg-white/5 hover:bg-white/15'}`} title="Bach" />
                           <button onClick={() => { engine.compositionGrid[name][i].stanza = !modes.stanza; setTick(t => t + 1); }}
+                            aria-label={`${label} bar ${i + 1} stanza (${STANZA_LIBRARY[engine.stanzaIndex[name]]?.name ?? 'none'}) — ${modes.stanza ? 'on' : 'off'}`}
+                            aria-pressed={modes.stanza}
                             className={`h-2 transition-all ${modes.stanza ? 'bg-rose-500' : 'bg-white/5 hover:bg-white/15'}`} title={`Stanza: ${STANZA_LIBRARY[engine.stanzaIndex[name]]?.name}`} />
                         </div>
                       );
@@ -400,20 +434,30 @@ export default function App() {
                     {/* Mode buttons: Lead / Bach / Stanza */}
                     <div className="absolute top-2 right-1 flex gap-0.5 z-10">
                       <button className="p-1 rounded-full hover:bg-white/10 transition-colors"
-                        onClick={(e) => { e.stopPropagation(); toggleLead(name); }} title="Lead">
+                        onClick={(e) => { e.stopPropagation(); toggleLead(name); }}
+                        title="Lead"
+                        aria-label={`${label} lead melody — ${isLead ? 'on' : 'off'}`}
+                        aria-pressed={isLead}>
                         <Zap className={`w-3 h-3 ${isLead ? 'text-amber-400 fill-amber-400' : 'text-slate-600'}`} />
                       </button>
                       <button className="p-1 rounded-full hover:bg-white/10 transition-colors"
-                        onClick={(e) => { e.stopPropagation(); toggleBach(name); }} title="Bach">
+                        onClick={(e) => { e.stopPropagation(); toggleBach(name); }}
+                        title="Bach"
+                        aria-label={`${label} Bach harmony — ${isBach ? 'on' : 'off'}`}
+                        aria-pressed={isBach}>
                         <Cpu className={`w-3 h-3 ${isBach ? 'text-emerald-400' : 'text-slate-600'}`} />
                       </button>
                       <button className="p-1 rounded-full hover:bg-white/10 transition-colors"
                         onClick={(e) => { e.stopPropagation(); toggleStanzaLive(name); }}
-                        title={isStanza ? `Stanza: ${stanzaMelody} (click to cycle)` : 'Enable Stanza melody'}>
+                        title={isStanza ? `Stanza: ${stanzaMelody} (click to cycle)` : 'Enable Stanza melody'}
+                        aria-label={isStanza ? `${label} stanza melody: ${stanzaMelody} — on, click to cycle` : `${label} stanza melody — off`}
+                        aria-pressed={isStanza}>
                         <Star className={`w-3 h-3 ${isStanza ? 'text-rose-400 fill-rose-400' : 'text-slate-600'}`} />
                       </button>
                     </div>
-                    <button className="flex flex-col items-center gap-1.5 w-full h-full pt-3" onClick={() => toggleChannel(name)}>
+                    <button className="flex flex-col items-center gap-1.5 w-full h-full pt-3" onClick={() => toggleChannel(name)}
+                      aria-label={`${label} channel — ${isActive ? 'active' : 'muted'}`}
+                      aria-pressed={isActive}>
                       <Icon className="w-5 h-5" />
                       <span className="text-[10px] uppercase tracking-wider font-medium">{label}</span>
                     </button>

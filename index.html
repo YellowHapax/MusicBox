@@ -3,9 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="The Mountain — a hypnotic ambient groove box. Step-sequencer with bass, pluck, pad, drums, cello, flute, guitar, and saxophone across three chord progressions: subdominant (Am·G·C·F), tonic (Am·F·Am·Em), and dominant (C·G·Am·F). Live orbit mode and 16-bar composition grid." />
+    <link rel="alternate" type="text/plain" href="/llms.txt" title="LLM Context" />
     <title>The Mountain — Groove Box</title>
   </head>
   <body>
+    <noscript>
+      <main style="font-family: sans-serif; max-width: 640px; margin: 2rem auto; padding: 1rem; color: #e2e8f0; background: #0a0a0c;">
+        <h1>The Mountain — Groove Box</h1>
+        <p>An ambient, procedural step-sequencer. JavaScript is required to play audio.</p>
+        <h2>Instruments</h2>
+        <p>8 channels: Bass, Pluck, Pad, Drums, Cello, Flute, E. Guitar, Saxophone. Each channel can play Base (chord tone), Lead (melodic variation), Bach (7th harmony), or Stanza (melody from library).</p>
+        <h2>Chord Progressions (Stanzas)</h2>
+        <ul>
+          <li><strong>Subdominant</strong>: Am → G → C → F (with 7ths: Am7 · G7 · Cmaj7 · Fmaj7)</li>
+          <li><strong>Tonic</strong>: Am → F → Am → Em (Am7 · Fmaj7 · Am7 · Em7)</li>
+          <li><strong>Dominant</strong>: C → G → Am → F (Cmaj7 · G7 · Am7 · Fmaj7)</li>
+        </ul>
+        <h2>Melody Library</h2>
+        <ul>
+          <li>Ode to Joy (E5 E5 F5 G5 / G5 F5 E5 D5 / C5 C5 D5 E5 / E5 D5 D5)</li>
+          <li>Für Elise (E5 D#5 E5 B4 / D5 C5 A4 / repeat)</li>
+          <li>Greensleeves (A4 C5 D5 E5 / G5 F#5 E5 D5 / …)</li>
+        </ul>
+        <h2>Modes</h2>
+        <ul>
+          <li><strong>Live Mode</strong>: 16-step orbital ring visualizer. Current chord displayed in centre. Tempo 60–160 BPM (default 110).</li>
+          <li><strong>Composition Mode</strong>: 16-bar grid. Per-bar harmony selector (D=subdominant, S=tonic, H=dominant).</li>
+        </ul>
+        <p><a href="/llms.txt">Full LLM context →</a></p>
+      </main>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

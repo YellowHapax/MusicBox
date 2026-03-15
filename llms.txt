@@ -41,3 +41,83 @@ When the Architect (user) asks for modifications:
 - Be verbose, be creative, and remember that we are painting with both DOM and frequencies!
 
 (¬¦_¦)? Gimel was here.
+
+---
+
+## Live Status Region
+
+The app renders a visually-hidden `role="status" aria-live="polite"` element near the top of the DOM
+that always contains a plain-text description of the current musical state.
+
+**While playing:**
+> `"Now playing -- Chord: Am7, Bar 3, Step 5/16, 110 BPM, subdominant stanza, live mode. Active channels: bass, pad, drums."`
+
+**While stopped:**
+> `"Sequencer stopped -- 110 BPM, subdominant stanza, live mode. Active channels: bass, pad, drums."`
+
+To read it from JS: `document.querySelector('[role="status"]').textContent`
+
+---
+
+## Stanza Chord Progressions -- Note Names
+
+Each stanza cycles through 4 chords, one per bar (16 steps = 1 bar).
+
+| Stanza | Bar 1 | Bar 2 | Bar 3 | Bar 4 |
+|--------|-------|-------|-------|-------|
+| subdominant | Am (A3 C4 E4) | G (G3 B3 D4) | C (C4 E4 G4) | F (F3 A3 C4) |
+| tonic | Am (A3 C4 E4) | F (F3 A3 C4) | Am (A3 C4 E4) | Em (E3 G3 B3) |
+| dominant | C (C4 E4 G4) | G (G3 B3 D4) | Am (A3 C4 E4) | F (F3 A3 C4) |
+
+With Bach (7th) extensions:
+
+| Stanza | Bar 1 | Bar 2 | Bar 3 | Bar 4 |
+|--------|-------|-------|-------|-------|
+| subdominant | Am7 (A3 C4 E4 G4) | G7 (G3 B3 D4 F4) | Cmaj7 (C4 E4 G4 B4) | Fmaj7 (F3 A3 C4 E4) |
+| tonic | Am7 | Fmaj7 | Am7 | Em7 (E3 G3 B3 D4) |
+| dominant | Cmaj7 | G7 | Am7 | Fmaj7 |
+
+---
+
+## Stanza Library -- Melody Note Names
+
+Melodies playable on any channel with the "Stanza" layer. Steps are 16th-note offsets (0-15).
+
+**Ode to Joy** (4 bars):
+- Bar 1: E5(step 0, 1.5n) . E5(step 6, 0.5n) . F5(step 8, 1n) . G5(step 12, 1n)
+- Bar 2: G5(0, 1.5n) . F5(6, 0.5n) . E5(8, 1n) . D5(12, 1n)
+- Bar 3: C5(0, 1.5n) . C5(6, 0.5n) . D5(8, 1n) . E5(12, 1n)
+- Bar 4: E5(0, 1.5n) . D5(6, 0.5n) . D5(8, 2n)
+
+**Fur Elise** (main motif, 4 bars):
+- Bar 1: E5 . D#5 . E5 . B4 (all 0.5n)
+- Bar 2: D5(0, 1n) . C5(6, 0.5n) . A4(8, 1.5n)
+- Bars 3-4 repeat
+
+**Greensleeves** (opening bars):
+- Bar 1: A4(0, 1.5n) . C5(6, 0.5n) . D5(8, 1n) . E5(12, 1n)
+- Bar 2: G5(0, 1.5n) . F#5(6, 0.5n) . E5(8, 1n) . D5(12, 1n)
+
+---
+
+## Timing Reference
+
+1 step = 1 sixteenth note. 16 steps = 1 bar. BPM range 60-160 (default 110).
+At 110 BPM: 1 step ~= 136ms, 1 bar ~= 2.18s, full 16-bar grid ~= 34.9s.
+
+---
+
+## Accessible Controls Summary
+
+Every button has aria-label. Toggles have aria-pressed. Sliders have aria-valuetext.
+
+- Play/Stop: "Start sequencer" / "Stop sequencer" (aria-pressed)
+- Save/Load: "Save composition to browser storage" / "Load saved composition from browser storage"
+- Volume: aria-label="Volume", aria-valuetext="50 percent"
+- Tempo: aria-label="Tempo", aria-valuetext="110 beats per minute"
+- Mode toggle: "Switch to Live Mode -- orbital visualizer" (aria-pressed)
+- Stanza button: "subdominant -- Am G C F" (aria-pressed)
+- Channel card: "Bass channel -- active" / "...muted" (aria-pressed)
+- Lead/Bach/Stanza sub-buttons: "Bass lead melody -- on/off" (aria-pressed)
+- Grid cell: "Bass bar 3 base -- on/off" (aria-pressed)
+- Grid harmony select: "Bar 3 harmony (D=subdominant Am.G.C.F, S=tonic, H=dominant)"
